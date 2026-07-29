@@ -586,7 +586,7 @@
   const TOTAL_GALLERY_SLOTS = 32;
   const galleryGrid = document.getElementById('gallery-grid');
   for(let i = 1; i <= TOTAL_GALLERY_SLOTS; i++){
-    const filename = 'anh ' + i + '.jpg';
+    const filename = 'anh-' + i + '.jpg';
     const item = document.createElement('div');
     item.className = 'gallery-item';
     item.onclick = () => openLightbox(filename);
