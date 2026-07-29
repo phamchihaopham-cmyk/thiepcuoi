@@ -454,9 +454,14 @@
     const entry = { name, attend, guests, message, ts: Date.now() };
 
     try{
-      const result = await window.storage.set(id, JSON.stringify(entry), true);
-      if(!result){ throw new Error('Storage returned empty result'); }
-      sendToGoogleSheet(entry); // fire-and-forget sync to your Google Sheet
+      // window.storage only exists inside Claude's own preview environment.
+      // On a real host (GitHub Pages, Netlify, etc.) it won't exist, so we
+      // skip it there and rely on the Google Sheet webhook instead.
+      if(window.storage && typeof window.storage.set === 'function'){
+        try{ await window.storage.set(id, JSON.stringify(entry), true); }
+        catch(storageErr){ console.warn('window.storage not available, continuing:', storageErr); }
+      }
+      await sendToGoogleSheet(entry);
       msgEl.textContent = 'Cảm ơn bạn đã xác nhận! Hẹn gặp trong ngày vui nhé 🌿';
       msgEl.className = 'form-msg ok';
       document.getElementById('rsvpForm').reset();
@@ -474,6 +479,15 @@
   async function loadWall(){
     const listEl = document.getElementById('wall-list');
     const summaryEl = document.getElementById('wall-summary');
+
+    // window.storage only exists in Claude's own preview environment.
+    // On a self-hosted site, confirmations live in your Google Sheet instead.
+    if(!window.storage || typeof window.storage.list !== 'function'){
+      summaryEl.textContent = '';
+      listEl.innerHTML = '<div class="wall-empty">Lời chúc của khách được lưu trong Google Sheet của cô dâu chú rể 🌿</div>';
+      return;
+    }
+
     try{
       const listResult = await window.storage.list('rsvp:', true);
       const keys = (listResult && listResult.keys) ? listResult.keys : [];
